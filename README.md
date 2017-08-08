@@ -7,7 +7,7 @@ Here, I present a diverse set of data science projects which showcases data mini
 * R script/markdown that includes all of the data processing and modeling along with comments that help to show my thought process (e.g., why chose certain models)
 * R dashboard to visualize the results
 
-### Project descriptions:
+### List of projects:
 * Predicting [breast cancer recurrence](http://archive.ics.uci.edu/ml/datasets/Breast+Cancer) 
 * Predicting [student performance](http://archive.ics.uci.edu/ml/datasets/Student+Performance)
 * Visualizing the USA's [health insurance marketplace](https://www.kaggle.com/hhs/health-insurance-marketplace)
