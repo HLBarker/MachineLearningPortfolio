@@ -4,7 +4,7 @@ Here, I present a diverse set of data science projects which showcases data mini
 
 ### Each project includes: 
 * README file that outlines the objective/question for the particular data science problem along with background information and results
-* R script/markdown that includes all of the data processing and modeling along with comments that help to show my thought process (e.g., why I chose certain models, choice of data transformation)
+* R script/markdown that includes all of the data processing and modeling along with comments that help to show my thought process (*e.g.*, why I chose certain models, choice of data transformation, etc.)
 * R dashboard to visualize and interpret the results
 
 ### List of projects:
