@@ -1,30 +1,139 @@
 ---
-title: "Predicting Breast Cancer Recurrence"
+title: "Predicting breast cancer from mass characteristics"
 output: github_document
+always_allow_html: yes
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(caret)
+library(caretEnsemble)
+library(plotly)
+source("~/Documents/Data Science/R_Workshop_Hope_041117/panelutils.R")
 ```
 
-## GitHub Documents
+## Objective
 
-This is an R Markdown format used for publishing markdown documents to GitHub. When you click the **Knit** button all R code chunks are run and a markdown file (.md) suitable for publishing to GitHub is generated.
+Accurately predict whether a breast mass is benign or malignant based off of various characteristics (e.g., symmetry, area, texture, etc.) of the mass.
 
-## Including Code
+## Data
 
-You can include R code in the document as follows:
+The dataset includes the patient diagnosis (212 patients with malignant masses and 357 patients with benign masses) with 30 different mass characteristics. The data were originally from the Univeristy of Wisconsin - Madison and are now freely available on [Kaggle](https://www.kaggle.com/uciml/breast-cancer-wisconsin-data) and the [UCI Machine Learning Repository](https://archive.ics.uci.edu/ml/datasets/Breast+Cancer+Wisconsin+%28Diagnostic%29).
 
-```{r cars}
-summary(cars)
+```{r load + explore data}
+data <- read.csv("~/Documents/Data Science/GitHub_repository/MachineLearningPortfolio/PredictingBreastCancer/BreastCancerData.csv")
+str(data) # 569 observations with 32 variables
+  # an extra column "X" was added to the end of the dataset that needs to be removed
+
+data <- data %>% 
+  select(-X)
+
+data %>% 
+  sapply(function(x) sum(is.na(x))) # no missing data
+
+data %>% 
+  select(-c(id, diagnosis)) %>% 
+  boxplot(use.cols = TRUE) # fairly skewed predictors and variable scales
+
 ```
 
-## Including Plots
+## Data transformation
 
-You can also embed plots, for example:
+After trying out various transformations (including centering, scaling, normalization, BoxCox, and YeoJohnson), I have decided to use standardization which helps to make the data more normal in distribution while maintaining outliers with large values that could be associated with malignant tumors.
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r data transformation}
+preprocessParams <- preProcess(data[,3:32], method = c("center", "scale")) # calculate the pre-process parameters from the dataset by standardizing them
+print(preprocessParams) # summarize transform parameters
+transformed <- predict(preprocessParams, data[,3:32]) # transform the dataset using the parameters
+# summary(transformed) # summarize the transformed dataset
+boxplot(transformed, use.cols = TRUE)
+
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+## Remove redundant features
+
+```{r remove redundant features}
+correlationMatrix <- cor(transformed)
+highlyCorrelated <- findCorrelation(correlationMatrix, cutoff = 0.75)
+print(highlyCorrelated) # remove attributes with an absolute correlation of >= 0.75
+
+transformed_pruned <- transformed %>% 
+  select(-c(highlyCorrelated)) 
+str(transformed_pruned) # 569 observations with 12 predictors
+
+data <- cbind(data$diagnosis, transformed_pruned)
+names(data)[1] <- "diagnosis"
+```
+
+## Rank features by importance
+
+Based off of importance ranking, mean lump area, the standard error of the lump radius, lump texture, and the standard error of the lump concavity are all useful predictors of the tumor diagnosis. Whereas the standard errors of lump symmetry, smoothness, and texture all appear to be less helpful predictors.
+
+```{r rank features}
+seed <- 23
+set.seed(seed)
+control <- trainControl(method = "repeatedcv", number = 10, repeats = 3) # prepare training scheme
+model <- train(diagnosis ~ ., data = data, method = "lvq", preProcess = "scale", trControl = control) # train the model
+importance <- varImp(model, scale = FALSE) # estimate variable importance
+print(importance) # summarize importance
+plot(importance) # plot importance
+```
+
+## Feature selection
+
+Feature selection shows that eight predictors give the best model accuracy, yet models with just five predictors are similar in accuracy. Thus, if a hospital was interested in streamlining their breast mass measurements, they could probably just assess these five characteristics (area_mean, radius_se, texture_worst, smoothness_worst, and symmytry_worst) and still be able to accurately diagnose the tumor. 
+
+```{r feature selection, message=FALSE, warning=FALSE}
+set.seed(seed)
+control <- rfeControl(functions = rfFuncs, method = "cv", number = 10) # define the control using a random forest selection function
+results <- rfe(data[,2:13], data$diagnosis, sizes = c(1:11), rfeControl = control) # run the RFE algorithm
+print(results) # summarize the results
+predictors(results) # list the chosen features
+selected_predictors <- predictors(results)
+plot(results, type=c("g", "o")) # plot the results
+
+data <- data %>% 
+  select(diagnosis, selected_predictors)
+```
+
+## Spot-checking ML algorithms
+
+Models that appear useful for accurate prediction include gbm, glmnet, glm, svmRadial, rf and C5.0.
+
+```{r spot checking algorithms, message=FALSE, warning=FALSE}
+control <- trainControl(method = "repeatedcv", number = 10, repeats=3)
+set.seed(seed)
+metric <- "Accuracy" # define test metric to compare models
+
+algorithms <- c("lda", "glm", "glmnet", "svmRadial", "knn", "nb", "rpart", "C5.0", "treebag", "rf", "gbm")
+
+garbage <- capture.output(models <- caretList(diagnosis ~ ., data = data, trControl = control, methodList = algorithms))
+results <- resamples(models)
+summary(results)
+dotplot(results)
+modelCor(results)
+```
+
+## Tune best ML algorithms
+
+```{r}
+# glm
+
+# gbm
+
+# glmnet
+
+# svmRadial
+
+# rf
+
+# C5.0
+```
+
+## Ensemble modeling
+
+```{r}
+
+```
+
