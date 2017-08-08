@@ -1,6 +1,6 @@
 # Machine Learning Portfolio
 
-Here, I present a diverse set of data science projects which showcases data mining and preparation, data exploration, data visualization, modeling, and interpretation of the results. 
+Here, I present a diverse set of data science projects which showcases my skills in data mining and preparation, data exploration, data visualization, modeling, and interpretation of the results. 
 
 ### Each project includes: 
 * README file that outlines the objective/question for the particular data science problem along with background information and results
