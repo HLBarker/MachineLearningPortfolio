@@ -9,3 +9,11 @@ relatively non-invasive technique for assessing breast lumps
 ### Machine learning process
 ### Results and interpretation
 ### Next steps
+
+
+Ideas for dashboard:
+Breast cancer prevalence [data](http://www.breastcancer.org/symptoms/understand_bc/statistics)
+PCA with vectors for breast cancer lumps, colored by benign and malignant
+CV accuracy for machine learning model 
+* interpretation --> which characteristics are needed for proper diagnosis?
+* next steps...
