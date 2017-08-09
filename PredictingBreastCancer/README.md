@@ -6,6 +6,9 @@
 relatively non-invasive technique for assessing breast lumps
 
 ### Objective
+
+Accurately predict whether a breast tumor is benign or malignant based on its characteristics (*e.g.*, size, texture, etc.), which are determined via ... 
+
 ### Machine learning process
 ### Results and interpretation
 ### Next steps
