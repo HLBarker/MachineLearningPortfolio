@@ -12,6 +12,7 @@ relatively non-invasive technique for assessing breast lumps
 
 
 Ideas for dashboard:
+
 Breast cancer prevalence [data](http://www.breastcancer.org/symptoms/understand_bc/statistics)
 
 PCA with vectors for breast cancer lumps, colored by benign and malignant
