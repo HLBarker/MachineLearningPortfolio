@@ -1,25 +1,24 @@
 ---
-title: "Predicting breast cancer from mass characteristics"
+title: "Predicting breast cancer from tumor characteristics"
 output: github_document
 always_allow_html: yes
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-library(tidyverse)
 library(caret)
 library(caretEnsemble)
-library(plotly)
-source("~/Documents/Data Science/R_Workshop_Hope_041117/panelutils.R")
+library(corrplot)
+library(tidyverse)
 ```
 
 ## Objective
 
-Accurately predict whether a breast mass is benign or malignant based off of various characteristics (e.g., symmetry, area, texture, etc.) of the mass.
+Accurately predict whether a breast mass is benign or malignant based off of various characteristics (e.g., symmetry, area, texture, etc.) of the tumor.
 
 ## Data
 
-The dataset includes the patient diagnosis (212 patients with malignant masses and 357 patients with benign masses) with 30 different mass characteristics. The data were originally from the Univeristy of Wisconsin - Madison and are now freely available on [Kaggle](https://www.kaggle.com/uciml/breast-cancer-wisconsin-data) and the [UCI Machine Learning Repository](https://archive.ics.uci.edu/ml/datasets/Breast+Cancer+Wisconsin+%28Diagnostic%29).
+The dataset includes the patient diagnosis (212 patients with malignant masses and 357 patients with benign masses) with 30 different tumor characteristics. The data were originally from the Univeristy of Wisconsin - Madison and are now freely available on [Kaggle](https://www.kaggle.com/uciml/breast-cancer-wisconsin-data) and the [UCI Machine Learning Repository](https://archive.ics.uci.edu/ml/datasets/Breast+Cancer+Wisconsin+%28Diagnostic%29).
 
 ```{r load + explore data}
 data <- read.csv("~/Documents/Data Science/GitHub_repository/MachineLearningPortfolio/PredictingBreastCancer/BreastCancerData.csv")
@@ -57,6 +56,7 @@ boxplot(transformed, use.cols = TRUE)
 correlationMatrix <- cor(transformed)
 highlyCorrelated <- findCorrelation(correlationMatrix, cutoff = 0.75)
 print(highlyCorrelated) # remove attributes with an absolute correlation of >= 0.75
+corrplot(correlationMatrix)
 
 transformed_pruned <- transformed %>% 
   select(-c(highlyCorrelated)) 
@@ -68,7 +68,7 @@ names(data)[1] <- "diagnosis"
 
 ## Rank features by importance
 
-Based off of importance ranking, mean lump area, the standard error of the lump radius, lump texture, and the standard error of the lump concavity are all useful predictors of the tumor diagnosis. Whereas the standard errors of lump symmetry, smoothness, and texture all appear to be less helpful predictors.
+Based off of importance ranking, mean tumor area, the standard error of the tumor radius, tumor texture, and the standard error of the tumor concavity are all useful predictors of the tumor diagnosis. Whereas the standard errors of tumor symmetry, smoothness, and texture all appear to be less helpful predictors.
 
 ```{r rank features}
 seed <- 23
@@ -82,12 +82,12 @@ plot(importance) # plot importance
 
 ## Feature selection
 
-Feature selection shows that eight predictors give the best model accuracy, yet models with just five predictors are similar in accuracy. Thus, if a hospital was interested in streamlining their breast mass measurements, they could probably just assess these five characteristics (area_mean, radius_se, texture_worst, smoothness_worst, and symmytry_worst) and still be able to accurately diagnose the tumor. 
+Feature selection shows that eight predictors give the best model accuracy, yet models with just five predictors are similar in accuracy. Thus, if a hospital was interested in streamlining their breast tumor measurements, they could probably just assess these five characteristics (area_mean, radius_se, texture_worst, smoothness_worst, and symmytry_worst) and still be able to accurately diagnose the tumor. 
 
 ```{r feature selection, message=FALSE, warning=FALSE}
 set.seed(seed)
 control <- rfeControl(functions = rfFuncs, method = "cv", number = 10) # define the control using a random forest selection function
-results <- rfe(data[,2:13], data$diagnosis, sizes = c(1:11), rfeControl = control) # run the RFE algorithm
+results <- rfe(data[, 2:13], data$diagnosis, sizes = c(1:11), rfeControl = control) # run the RFE algorithm
 print(results) # summarize the results
 predictors(results) # list the chosen features
 selected_predictors <- predictors(results)
@@ -95,6 +95,7 @@ plot(results, type=c("g", "o")) # plot the results
 
 data <- data %>% 
   select(diagnosis, selected_predictors)
+str(data)
 ```
 
 ## Spot-checking ML algorithms
@@ -112,28 +113,89 @@ garbage <- capture.output(models <- caretList(diagnosis ~ ., data = data, trCont
 results <- resamples(models)
 summary(results)
 dotplot(results)
-modelCor(results)
+cormodels <- modelCor(results)
+print(cormodels)
+corrplot(cormodels)
 ```
 
 ## Tune best ML algorithms
 
-```{r}
+With model tuning, we can slightly increase the prediction accuracies of the best machine learning algorithms. After tuning, the most accurate model is a gradient boosting machine (gbm) with 1,000 trees, a shrinkage parameter of 0.01, and a minimum of 15 observations in the terminal tree nodes, and the model allows for 2-way interactions between predictor variables. This model has an accuracy of 0.9696.  
+
+```{r tuning best algorithms, message=FALSE, warning=FALSE}
 # glm
+modelLookup(model = "glm") # look up the tuning parameter of the model
+set.seed(seed)
+glm_gridsearch <- train(diagnosis ~ ., data = data, method = "glm", metric = metric, trControl = control)
+print(glm_gridsearch)
 
 # gbm
+tunegrid <- expand.grid(n.trees = c(900, 1000, 1100), interaction.depth = c(1, 2), 
+                        shrinkage = c(0.01), n.minobsinnode = c(15, 20)) 
+set.seed(seed)
+garbage <- capture.output(gbm_gridsearch <- train(diagnosis ~ ., data = data, method = "gbm", metric = metric,
+                                                  tuneGrid = tunegrid, trControl = control))
+print(gbm_gridsearch)
+max(gbm_gridsearch$results$Accuracy)
 
 # glmnet
+tunegrid <- expand.grid(alpha = c(0.5, 0.75, 1), lambda = c(0.0001, 0.0002, 0.0003)) 
+set.seed(seed)
+glmnet_gridsearch <- train(diagnosis ~ ., data = data, method = "glmnet", metric = metric, tuneGrid = tunegrid,
+                       trControl = control)
+print(glmnet_gridsearch)
+max(glmnet_gridsearch$results$Accuracy)
 
 # svmRadial
+tunegrid <- expand.grid(sigma = c(0.14, 0.15, 0.16, 0.17, 0.18), C = c(0.75, 0.80, 0.90, 1)) 
+set.seed(seed)
+svm_gridsearch <- train(diagnosis ~ ., data = data, method = "svmRadial", metric = metric, tuneGrid = tunegrid,
+                       trControl = control)
+svm_gridsearch <- train(diagnosis ~ ., data = data, method = "svmRadial", metric = metric, tunelength = 5,
+                       trControl = control)
+print(svm_gridsearch)
+max(svm_gridsearch$results$Accuracy)
 
 # rf
+mtry <- sqrt(ncol(data[ , 2:9])) # default for rf tuning parameter is 2.828427
+tunegrid <- expand.grid(.mtry = c(1:8))
+set.seed(seed)
+rf_gridsearch <- train(diagnosis ~ ., data = data, method = "rf", metric = metric, tuneGrid = tunegrid,
+                       trControl = control)
+print(rf_gridsearch)
+max(rf_gridsearch$results$Accuracy)
 
 # C5.0
+tunegrid <- expand.grid(.trials = c(5:15), .model = "tree", .winnow = FALSE) 
+set.seed(seed)
+C5.0_gridsearch <- train(diagnosis ~ ., data = data, method = "C5.0", metric = metric, tuneGrid = tunegrid,
+                       trControl = control)
+print(C5.0_gridsearch)
+max(C5.0_gridsearch$results$Accuracy)
 ```
 
 ## Ensemble modeling
 
-```{r}
+Stacking the best machine learning models together with a random forest algorithm, slightly improves upon the accuracy of the best tuned gradient boosting machine (which had an accuracy of 0.9696). The accuracy of the stacked model is 0.977, and the model includes the generalized linear model (glm), radial support vector machine (svmRadial), the random forest model, C5.0, and the gradient boosting machine. I did not include the glmnet model since this was highly correlated (> 0.75) with the generalized linear model. 
+
+```{r, message=FALSE, warning=FALSE}
+algorithmsList2 = c("glm", "svmRadial", "C5.0", "rf", "gbm")
+
+stackControl <- trainControl(method="repeatedcv", number=10, repeats=3, savePredictions=TRUE, classProbs=TRUE)
+set.seed(seed)
+garbage <- capture.output(models2 <- caretList(diagnosis ~ ., data = data, trControl = stackControl, methodList = algorithmsList2))
+
+
+set.seed(seed)
+stack.glm <- caretStack(models2, method = "glm", metric = "Accuracy", trControl=stackControl) # stack models with glm
+  # try out different kinds of models to stack to see which one is most accurate
+print(stack.glm) # 0.9726613
+
+set.seed(seed)
+stack.rf <- caretStack(models2, method = "rf", metric = "Accuracy", trControl=stackControl) # stack models with glm
+  # try out different kinds of models to stack to see which one is most accurate
+print(stack.rf) # 0.9769578
 
 ```
 
+To conclude, a stacked machine learning model with eight breast tumor characteristics is quite accurate (0.977) at determining whether the tumor is benign or malignant. This statistical approach could be applied to help improve breast cancer diagnoses and detection.

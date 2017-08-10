@@ -1,15 +1,15 @@
-Predicting breast cancer from mass characteristics
+Predicting breast cancer from tumor characteristics
 ================
 
 Objective
 ---------
 
-Accurately predict whether a breast mass is benign or malignant based off of various characteristics (e.g., symmetry, area, texture, etc.) of the mass.
+Accurately predict whether a breast mass is benign or malignant based off of various characteristics (e.g., symmetry, area, texture, etc.) of the tumor.
 
 Data
 ----
 
-The dataset includes the patient diagnosis (212 patients with malignant masses and 357 patients with benign masses) with 30 different mass characteristics. The data were originally from the Univeristy of Wisconsin - Madison and are now freely available on [Kaggle](https://www.kaggle.com/uciml/breast-cancer-wisconsin-data) and the [UCI Machine Learning Repository](https://archive.ics.uci.edu/ml/datasets/Breast+Cancer+Wisconsin+%28Diagnostic%29).
+The dataset includes the patient diagnosis (212 patients with malignant masses and 357 patients with benign masses) with 30 different tumor characteristics. The data were originally from the Univeristy of Wisconsin - Madison and are now freely available on [Kaggle](https://www.kaggle.com/uciml/breast-cancer-wisconsin-data) and the [UCI Machine Learning Repository](https://archive.ics.uci.edu/ml/datasets/Breast+Cancer+Wisconsin+%28Diagnostic%29).
 
 ``` r
 data <- read.csv("~/Documents/Data Science/GitHub_repository/MachineLearningPortfolio/PredictingBreastCancer/BreastCancerData.csv")
@@ -129,6 +129,12 @@ print(highlyCorrelated) # remove attributes with an absolute correlation of >= 0
     ##  [1]  7  8  6 28 27 23 21  3 26 24  1 13 18 16 14  5 10  2
 
 ``` r
+corrplot(correlationMatrix)
+```
+
+![](PredictingBreastCancer_files/figure-markdown_github-ascii_identifiers/remove%20redundant%20features-1.png)
+
+``` r
 transformed_pruned <- transformed %>% 
   select(-c(highlyCorrelated)) 
 str(transformed_pruned) # 569 observations with 12 predictors
@@ -156,7 +162,7 @@ names(data)[1] <- "diagnosis"
 Rank features by importance
 ---------------------------
 
-Based off of importance ranking, mean lump area, the standard error of the lump radius, lump texture, and the standard error of the lump concavity are all useful predictors of the tumor diagnosis. Whereas the standard errors of lump symmetry, smoothness, and texture all appear to be less helpful predictors.
+Based off of importance ranking, mean tumor area, the standard error of the tumor radius, tumor texture, and the standard error of the tumor concavity are all useful predictors of the tumor diagnosis. Whereas the standard errors of tumor symmetry, smoothness, and texture all appear to be less helpful predictors.
 
 ``` r
 seed <- 23
@@ -197,12 +203,12 @@ plot(importance) # plot importance
 Feature selection
 -----------------
 
-Feature selection shows that eight predictors give the best model accuracy, yet models with just five predictors are similar in accuracy. Thus, if a hospital was interested in streamlining their breast mass measurements, they could probably just assess these five characteristics (area\_mean, radius\_se, texture\_worst, smoothness\_worst, and symmytry\_worst) and still be able to accurately diagnose the tumor.
+Feature selection shows that eight predictors give the best model accuracy, yet models with just five predictors are similar in accuracy. Thus, if a hospital was interested in streamlining their breast tumor measurements, they could probably just assess these five characteristics (area\_mean, radius\_se, texture\_worst, smoothness\_worst, and symmytry\_worst) and still be able to accurately diagnose the tumor.
 
 ``` r
 set.seed(seed)
 control <- rfeControl(functions = rfFuncs, method = "cv", number = 10) # define the control using a random forest selection function
-results <- rfe(data[,2:13], data$diagnosis, sizes = c(1:11), rfeControl = control) # run the RFE algorithm
+results <- rfe(data[, 2:13], data$diagnosis, sizes = c(1:11), rfeControl = control) # run the RFE algorithm
 print(results) # summarize the results
 ```
 
@@ -249,10 +255,24 @@ plot(results, type=c("g", "o")) # plot the results
 ``` r
 data <- data %>% 
   select(diagnosis, selected_predictors)
+str(data)
 ```
+
+    ## 'data.frame':    569 obs. of  9 variables:
+    ##  $ diagnosis              : Factor w/ 2 levels "B","M": 2 2 2 2 2 2 2 2 2 2 ...
+    ##  $ area_mean              : num  0.984 1.907 1.558 -0.764 1.825 ...
+    ##  $ radius_se              : num  2.488 0.499 1.228 0.326 1.269 ...
+    ##  $ texture_worst          : num  -1.358 -0.369 -0.024 0.134 -1.465 ...
+    ##  $ smoothness_worst       : num  1.307 -0.375 0.527 3.391 0.22 ...
+    ##  $ symmetry_worst         : num  2.748 -0.244 1.151 6.041 -0.868 ...
+    ##  $ concavity_se           : num  0.723 -0.44 0.213 0.819 0.828 ...
+    ##  $ fractal_dimension_worst: num  1.935 0.281 0.201 4.931 -0.397 ...
+    ##  $ symmetry_se            : num  1.148 -0.805 0.237 4.729 -0.361 ...
 
 Spot-checking ML algorithms
 ---------------------------
+
+Models that appear useful for accurate prediction include gbm, glmnet, glm, svmRadial, rf and C5.0.
 
 ``` r
 control <- trainControl(method = "repeatedcv", number = 10, repeats=3)
@@ -308,7 +328,8 @@ dotplot(results)
 ![](PredictingBreastCancer_files/figure-markdown_github-ascii_identifiers/spot%20checking%20algorithms-1.png)
 
 ``` r
-modelCor(results)
+cormodels <- modelCor(results)
+print(cormodels)
 ```
 
     ##                 lda       glm    glmnet svmRadial       knn        nb
@@ -335,3 +356,318 @@ modelCor(results)
     ## treebag   0.7035997 0.8073312 1.0000000 0.8529312 0.6165373
     ## rf        0.6575943 0.7871779 0.8529312 1.0000000 0.6842660
     ## gbm       0.4584819 0.6679394 0.6165373 0.6842660 1.0000000
+
+``` r
+corrplot(cormodels)
+```
+
+![](PredictingBreastCancer_files/figure-markdown_github-ascii_identifiers/spot%20checking%20algorithms-2.png)
+
+Tune best ML algorithms
+-----------------------
+
+With model tuning, we can slightly increase the prediction accuracies of the best machine learning algorithms. After tuning, the most accurate model is a gradient boosting machine (gbm) with 1,000 trees, a shrinkage parameter of 0.01, and a minimum of 15 observations in the terminal tree nodes, and the model allows for 2-way interactions between predictor variables. This model has an accuracy of 0.9696.
+
+``` r
+# glm
+modelLookup(model = "glm") # look up the tuning parameter of the model
+```
+
+    ##   model parameter     label forReg forClass probModel
+    ## 1   glm parameter parameter   TRUE     TRUE      TRUE
+
+``` r
+set.seed(seed)
+glm_gridsearch <- train(diagnosis ~ ., data = data, method = "glm", metric = metric, trControl = control)
+print(glm_gridsearch)
+```
+
+    ## Generalized Linear Model 
+    ## 
+    ## 569 samples
+    ##   8 predictor
+    ##   2 classes: 'B', 'M' 
+    ## 
+    ## No pre-processing
+    ## Resampling: Cross-Validated (10 fold, repeated 3 times) 
+    ## Summary of sample sizes: 513, 513, 512, 511, 512, 511, ... 
+    ## Resampling results:
+    ## 
+    ##   Accuracy   Kappa    
+    ##   0.9671665  0.9291647
+
+``` r
+# gbm
+tunegrid <- expand.grid(n.trees = c(900, 1000, 1100), interaction.depth = c(1, 2), 
+                        shrinkage = c(0.01), n.minobsinnode = c(15, 20)) 
+set.seed(seed)
+garbage <- capture.output(gbm_gridsearch <- train(diagnosis ~ ., data = data, method = "gbm", metric = metric,
+                                                  tuneGrid = tunegrid, trControl = control))
+print(gbm_gridsearch)
+```
+
+    ## Stochastic Gradient Boosting 
+    ## 
+    ## 569 samples
+    ##   8 predictor
+    ##   2 classes: 'B', 'M' 
+    ## 
+    ## No pre-processing
+    ## Resampling: Cross-Validated (10 fold, repeated 3 times) 
+    ## Summary of sample sizes: 513, 513, 512, 511, 512, 511, ... 
+    ## Resampling results across tuning parameters:
+    ## 
+    ##   interaction.depth  n.minobsinnode  n.trees  Accuracy   Kappa    
+    ##   1                  15               900     0.9566488  0.9054637
+    ##   1                  15              1000     0.9560741  0.9043062
+    ##   1                  15              1100     0.9607528  0.9147678
+    ##   1                  20               900     0.9560637  0.9041300
+    ##   1                  20              1000     0.9549041  0.9018621
+    ##   1                  20              1100     0.9589775  0.9107482
+    ##   2                  15               900     0.9678125  0.9303781
+    ##   2                  15              1000     0.9695568  0.9341726
+    ##   2                  15              1100     0.9677920  0.9303227
+    ##   2                  20               900     0.9689821  0.9329160
+    ##   2                  20              1000     0.9695464  0.9341822
+    ##   2                  20              1100     0.9666220  0.9277869
+    ## 
+    ## Tuning parameter 'shrinkage' was held constant at a value of 0.01
+    ## Accuracy was used to select the optimal model using  the largest value.
+    ## The final values used for the model were n.trees = 1000,
+    ##  interaction.depth = 2, shrinkage = 0.01 and n.minobsinnode = 15.
+
+``` r
+max(gbm_gridsearch$results$Accuracy)
+```
+
+    ## [1] 0.9695568
+
+``` r
+# glmnet
+tunegrid <- expand.grid(alpha = c(0.5, 0.75, 1), lambda = c(0.0001, 0.0002, 0.0003)) 
+set.seed(seed)
+glmnet_gridsearch <- train(diagnosis ~ ., data = data, method = "glmnet", metric = metric, tuneGrid = tunegrid,
+                       trControl = control)
+print(glmnet_gridsearch)
+```
+
+    ## glmnet 
+    ## 
+    ## 569 samples
+    ##   8 predictor
+    ##   2 classes: 'B', 'M' 
+    ## 
+    ## No pre-processing
+    ## Resampling: Cross-Validated (10 fold, repeated 3 times) 
+    ## Summary of sample sizes: 513, 513, 512, 511, 512, 511, ... 
+    ## Resampling results across tuning parameters:
+    ## 
+    ##   alpha  lambda  Accuracy   Kappa    
+    ##   0.50   1e-04   0.9659965  0.9265759
+    ##   0.50   2e-04   0.9654117  0.9252546
+    ##   0.50   3e-04   0.9654117  0.9252546
+    ##   0.75   1e-04   0.9665918  0.9279339
+    ##   0.75   2e-04   0.9659965  0.9265759
+    ##   0.75   3e-04   0.9654117  0.9252546
+    ##   1.00   1e-04   0.9665918  0.9279339
+    ##   1.00   2e-04   0.9665918  0.9279339
+    ##   1.00   3e-04   0.9659965  0.9265759
+    ## 
+    ## Accuracy was used to select the optimal model using  the largest value.
+    ## The final values used for the model were alpha = 1 and lambda = 2e-04.
+
+``` r
+max(glmnet_gridsearch$results$Accuracy)
+```
+
+    ## [1] 0.9665918
+
+``` r
+# svmRadial
+tunegrid <- expand.grid(sigma = c(0.14, 0.15, 0.16, 0.17, 0.18), C = c(0.75, 0.80, 0.90, 1)) 
+set.seed(seed)
+svm_gridsearch <- train(diagnosis ~ ., data = data, method = "svmRadial", metric = metric, tuneGrid = tunegrid,
+                       trControl = control)
+svm_gridsearch <- train(diagnosis ~ ., data = data, method = "svmRadial", metric = metric, tunelength = 5,
+                       trControl = control)
+print(svm_gridsearch)
+```
+
+    ## Support Vector Machines with Radial Basis Function Kernel 
+    ## 
+    ## 569 samples
+    ##   8 predictor
+    ##   2 classes: 'B', 'M' 
+    ## 
+    ## No pre-processing
+    ## Resampling: Cross-Validated (10 fold, repeated 3 times) 
+    ## Summary of sample sizes: 512, 513, 512, 512, 512, 512, ... 
+    ## Resampling results across tuning parameters:
+    ## 
+    ##   C     Accuracy   Kappa    
+    ##   0.25  0.9473223  0.8856734
+    ##   0.50  0.9567309  0.9066437
+    ##   1.00  0.9649083  0.9246874
+    ## 
+    ## Tuning parameter 'sigma' was held constant at a value of 0.1614145
+    ## Accuracy was used to select the optimal model using  the largest value.
+    ## The final values used for the model were sigma = 0.1614145 and C = 1.
+
+``` r
+max(svm_gridsearch$results$Accuracy)
+```
+
+    ## [1] 0.9649083
+
+``` r
+# rf
+mtry <- sqrt(ncol(data[ , 2:9])) # default for rf tuning parameter is 2.828427
+tunegrid <- expand.grid(.mtry = c(1:8))
+set.seed(seed)
+rf_gridsearch <- train(diagnosis ~ ., data = data, method = "rf", metric = metric, tuneGrid = tunegrid,
+                       trControl = control)
+print(rf_gridsearch)
+```
+
+    ## Random Forest 
+    ## 
+    ## 569 samples
+    ##   8 predictor
+    ##   2 classes: 'B', 'M' 
+    ## 
+    ## No pre-processing
+    ## Resampling: Cross-Validated (10 fold, repeated 3 times) 
+    ## Summary of sample sizes: 513, 513, 512, 511, 512, 511, ... 
+    ## Resampling results across tuning parameters:
+    ## 
+    ##   mtry  Accuracy   Kappa    
+    ##   1     0.9601475  0.9130085
+    ##   2     0.9613477  0.9155071
+    ##   3     0.9566484  0.9052005
+    ##   4     0.9595933  0.9118303
+    ##   5     0.9531706  0.8979029
+    ##   6     0.9520007  0.8955024
+    ##   7     0.9525855  0.8969533
+    ##   8     0.9508203  0.8931670
+    ## 
+    ## Accuracy was used to select the optimal model using  the largest value.
+    ## The final value used for the model was mtry = 2.
+
+``` r
+max(rf_gridsearch$results$Accuracy)
+```
+
+    ## [1] 0.9613477
+
+``` r
+# C5.0
+tunegrid <- expand.grid(.trials = c(5:15), .model = "tree", .winnow = FALSE) 
+set.seed(seed)
+C5.0_gridsearch <- train(diagnosis ~ ., data = data, method = "C5.0", metric = metric, tuneGrid = tunegrid,
+                       trControl = control)
+print(C5.0_gridsearch)
+```
+
+    ## C5.0 
+    ## 
+    ## 569 samples
+    ##   8 predictor
+    ##   2 classes: 'B', 'M' 
+    ## 
+    ## No pre-processing
+    ## Resampling: Cross-Validated (10 fold, repeated 3 times) 
+    ## Summary of sample sizes: 513, 513, 512, 511, 512, 511, ... 
+    ## Resampling results across tuning parameters:
+    ## 
+    ##   trials  Accuracy   Kappa    
+    ##    5      0.9489424  0.8911543
+    ##    6      0.9513439  0.8954286
+    ##    7      0.9489730  0.8908320
+    ##    8      0.9507479  0.8939690
+    ##    9      0.9507375  0.8942357
+    ##   10      0.9571922  0.9074854
+    ##   11      0.9554580  0.9044269
+    ##   12      0.9565966  0.9061854
+    ##   13      0.9530770  0.8990493
+    ##   14      0.9536622  0.9001452
+    ##   15      0.9531080  0.8992512
+    ## 
+    ## Tuning parameter 'model' was held constant at a value of tree
+    ## 
+    ## Tuning parameter 'winnow' was held constant at a value of FALSE
+    ## Accuracy was used to select the optimal model using  the largest value.
+    ## The final values used for the model were trials = 10, model = tree
+    ##  and winnow = FALSE.
+
+``` r
+max(C5.0_gridsearch$results$Accuracy)
+```
+
+    ## [1] 0.9571922
+
+Ensemble modeling
+-----------------
+
+Stacking the best machine learning models together with a random forest algorithm, slightly improves upon the accuracy of the best tuned gradient boosting machine (which had an accuracy of 0.9696). The accuracy of the stacked model is 0.977, and the model includes the generalized linear model (glm), radial support vector machine (svmRadial), the random forest model, C5.0, and the gradient boosting machine. I did not include the glmnet model since this was highly correlated (&gt; 0.75) with the generalized linear model.
+
+``` r
+algorithmsList2 = c("glm", "svmRadial", "C5.0", "rf", "gbm")
+
+stackControl <- trainControl(method="repeatedcv", number=10, repeats=3, savePredictions=TRUE, classProbs=TRUE)
+set.seed(seed)
+garbage <- capture.output(models2 <- caretList(diagnosis ~ ., data = data, trControl = stackControl, methodList = algorithmsList2))
+
+
+set.seed(seed)
+stack.glm <- caretStack(models2, method = "glm", metric = "Accuracy", trControl=stackControl) # stack models with glm
+  # try out different kinds of models to stack to see which one is most accurate
+print(stack.glm) # 0.9726613
+```
+
+    ## A glm ensemble of 2 base models: glm, svmRadial, C5.0, rf, gbm
+    ## 
+    ## Ensemble results:
+    ## Generalized Linear Model 
+    ## 
+    ## 1707 samples
+    ##    5 predictor
+    ##    2 classes: 'B', 'M' 
+    ## 
+    ## No pre-processing
+    ## Resampling: Cross-Validated (10 fold, repeated 3 times) 
+    ## Summary of sample sizes: 1536, 1537, 1537, 1536, 1536, 1535, ... 
+    ## Resampling results:
+    ## 
+    ##   Accuracy   Kappa   
+    ##   0.9726613  0.941315
+
+``` r
+set.seed(seed)
+stack.rf <- caretStack(models2, method = "rf", metric = "Accuracy", trControl=stackControl) # stack models with glm
+  # try out different kinds of models to stack to see which one is most accurate
+print(stack.rf) # 0.9769578
+```
+
+    ## A rf ensemble of 2 base models: glm, svmRadial, C5.0, rf, gbm
+    ## 
+    ## Ensemble results:
+    ## Random Forest 
+    ## 
+    ## 1707 samples
+    ##    5 predictor
+    ##    2 classes: 'B', 'M' 
+    ## 
+    ## No pre-processing
+    ## Resampling: Cross-Validated (10 fold, repeated 3 times) 
+    ## Summary of sample sizes: 1536, 1537, 1537, 1536, 1536, 1535, ... 
+    ## Resampling results across tuning parameters:
+    ## 
+    ##   mtry  Accuracy   Kappa    
+    ##   2     0.9769578  0.9505452
+    ##   3     0.9763730  0.9492777
+    ##   5     0.9749959  0.9463012
+    ## 
+    ## Accuracy was used to select the optimal model using  the largest value.
+    ## The final value used for the model was mtry = 2.
+
+To conclude, a stacked machine learning model with eight breast tumor characteristics is quite accurate (0.977) at determining whether the tumor is benign or malignant. This statistical approach could be applied to help improve breast cancer diagnoses and detection.
