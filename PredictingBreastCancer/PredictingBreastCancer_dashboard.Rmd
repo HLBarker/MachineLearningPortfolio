@@ -1,0 +1,81 @@
+---
+title: "Predicting Breast Cancer dashboard"
+output: 
+  flexdashboard::flex_dashboard:
+  orientation: rows
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+```
+
+Row {data-height = 250}
+-----------------------------------------------------------------------
+
+### women will develop breast cancer in her lifetime [(source)](http://www.breastcancer.org/symptoms/understand_bc/statistics)
+
+```{r}
+valueBox("1 in 8", icon = "fa-female", color = "rgb(201, 199, 197)")
+```
+
+### of breast cancers occur in women with no family history of breast cancer [(source)](http://www.breastcancer.org/symptoms/understand_bc/statistics)
+
+```{r}
+valueBox("85%", icon = "fa-female", color = "rgb(201, 199, 197)")
+```
+
+### Measuring breast masses for cancer diagnosis 
+
+Fine-needle aspiration biopsy technique
+
+Traditional diagnosis from breast mass measurements
+
+Machine learning improves on traditional methods by... only need eight characteristics for accurate diagnosis (97.7% accuracy).
+
+Big picture: we can improve breast cancer diagnosis and detection
+
+Early detection is key to recovery from breast cancer. Women who are diagnosed at the earliest stage of breast cancer have a much greater chance of surviving (> 90%) compared to women who are diagnosed at the most advanced stage (only 5%, [source](http://www.cancerresearchuk.org/about-cancer/cancer-symptoms/why-is-early-diagnosis-important)).
+
+Row {data-height = 750}
+-----------------------------------------------------------------------
+
+### Characteristics of breast cancer masses
+
+```{r}
+# PCA
+library(readr)
+library(tidyverse)
+library(plotly)
+
+data <- read_csv("~/Documents/Data Science/GitHub_repository/MachineLearningPortfolio/PredictingBreastCancer/data.csv")
+library(tsne)
+set.seed(7)
+sne <- tsne(data[ , 3:10])
+snne <- as.data.frame(sne)
+
+library(vegan)
+set.seed(7)
+fit <- envfit(snne ~ data$area_mean + data$radius_se + data$texture_worst + data$smoothness_worst + data$symmetry_worst + 
+                data$concavity_se + data$fractal_dimension_worst + data$symmetry_se)
+vectors <- as.data.frame(fit$vectors$arrows)
+vectors <- vectors*40
+
+origin <- as.data.frame(matrix(0, ncol = 2, nrow = 1))
+
+for(i in 1:8){
+  vector_i <- vectors[1, ]
+  data_i <- rbind(origin, vector_i)
+}
+
+
+plot(snne)
+plot(fit)
+
+plot_ly() %>% 
+  add_trace(data = snne, x = snne$V1, y = snne$V2, type="scatter", mode="markers", opacity = 0.7, color = ~data$diagnosis, colors = "Set1") 
+  
+#add_trace(data = data_1, x = area$V1, y = area$V2, type="scatter", mode = "lines", name = "mean area")
+
+
+```
+
