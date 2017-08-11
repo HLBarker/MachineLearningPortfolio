@@ -23,3 +23,5 @@ PCA with vectors for breast cancer lumps, colored by benign and malignant
 CV accuracy for machine learning model 
 * interpretation --> which characteristics are needed for proper diagnosis?
 * next steps...
+
+### Description of files:
