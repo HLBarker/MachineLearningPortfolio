@@ -18,17 +18,7 @@ Modeling shows that a only a modest number (eight) of breast tumor/lump characte
 
 ### Next steps
 
-
-
-Ideas for dashboard:
-
-Breast cancer prevalence [data](http://www.breastcancer.org/symptoms/understand_bc/statistics)
-
-PCA with vectors for breast cancer lumps, colored by benign and malignant
-
-CV accuracy for machine learning model 
-* interpretation --> which characteristics are needed for proper diagnosis?
-* next steps...
+To make this machine learning approach easy to use and incorporate in hospitals, we would need to create a web application that extracts the eight necessary characteristics from breast biopsy images. With this approach, the tumor measurements would be (1) standardized across samples, (2) measurement/human error would hopefully be eliminated, and (3) measurements would be fast and easy to procure and automate. The application would then feed the data into the stacked machine learning model and produce a clear outcome: malignant or benign. In addition, the application could also deliver more information about the breast lump in comparison to the larger population (e.g., what percentile does the lump fall in for the various measurements compared to a database of breast lumps?).
 
 ### Description of files:
 
