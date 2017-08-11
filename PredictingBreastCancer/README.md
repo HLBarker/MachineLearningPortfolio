@@ -14,7 +14,7 @@ Using standardized tumor characteristics, I selected the eight most prominent pr
 
 ### Results and interpretation
 
-Modeling shows that a only a modest number (eight) of breast tumor/lump characteristics are needed to accurately assess whether the tumor is benign or malignant. This machine learning approach could be applied to help detect and diagnose breast cancer in hospitals and clinics. 
+Modeling shows that a only a modest number (eight) of breast tumor/lump characteristics are needed to accurately assess whether the tumor is benign or malignant. This machine learning approach could be applied to help quickly detect and diagnose breast cancer in hospitals and clinics. 
 
 ### Next steps
 
@@ -31,3 +31,11 @@ CV accuracy for machine learning model
 * next steps...
 
 ### Description of files:
+
+* Predicting breast cancer files = contains figures that are linked to the "PredictingBreastCancer.md" report
+* BreastCancerData.csv = downloaded dataset from [Kaggle](https://www.kaggle.com/uciml/breast-cancer-wisconsin-data)
+* PredictingBreastCancer.Rmd = R markdown document used to create the "PredictingBreastCancer.md" report
+* **PredictingBreastCancer.md** = report that outlines the data exploration, processing, modeling, and results (includes figures)
+* PredictingBreastCancer_dashboard.Rmd = R markdown document used to create the "PredictingBreastCancer_dashboard.Html" interactive report
+* **PredictingBreastCancer_dashboard.Html** = interactive and visual report of the project (since this is a large file, you will need to download and open it to view the file)
+* data.csv = smaller dataset used to make interactive visuals in the "PredictingBreastCancer_dashboard.Html" interactive report
