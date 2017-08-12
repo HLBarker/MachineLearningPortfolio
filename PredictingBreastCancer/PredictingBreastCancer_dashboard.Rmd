@@ -2,14 +2,14 @@
 title: "Predicting Breast Cancer dashboard"
 output: 
   flexdashboard::flex_dashboard:
-  orientation: rows
+  orientation: columns
 ---
 
 ```{r setup, include=FALSE}
 library(flexdashboard)
 ```
 
-Row {data-height = 250}
+Column {data-width = 300}
 -----------------------------------------------------------------------
 
 ### women will develop breast cancer in her lifetime [(source)](http://www.breastcancer.org/symptoms/understand_bc/statistics)
@@ -26,17 +26,13 @@ valueBox("85%", icon = "fa-female", color = "rgb(201, 199, 197)")
 
 ### Measuring breast masses for cancer diagnosis 
 
-Fine-needle aspiration biopsy technique
+Biopsy via fine-needle aspiration is a relatively non-invasive and quick technique for assessing the malignancy of breast lumps ([source](https://bmccancer.biomedcentral.com/articles/10.1186/1471-2407-12-41)). Breast lump biopsies are sent to pathologists who then examine the tissue sample to assess whether the cells are cancerous or not. Machine learning applications could help improve and streamline this process by extracting tissue characteristics (mean area, symmetry, concavity, etc.) from microscope images and then feeding this information into the stacked machine learning model to predict the tissue's malignancy (with 97.7% accuracy). 
 
-Traditional diagnosis from breast mass measurements
+Early detection is key to recovery from breast cancer. Women who are diagnosed at the earliest stage of breast cancer have a much greater chance of surviving (> 90%) compared to women who are diagnosed at the most advanced stage (only 5%, [source](http://www.cancerresearchuk.org/about-cancer/cancer-symptoms/why-is-early-diagnosis-important)). Leveraging data and machine learning approaches could help to speed up breast cancer diagnosis and detection.
 
-Machine learning improves on traditional methods by... only need eight characteristics for accurate diagnosis (97.7% accuracy).
+The scatterplot to the left illustrates the key differences between malignant (gray) and benign (red) breast tumors. Each line is a vector of a particular tumor characteristic. Values of that characteristic increase along the vector, so for instance malignant tumors have larger values for the tissue's mean area, standard error of the radius, and standard error of cell concavity compared to benign tumors. Similarly, benign tumors tend to have larger standard errors of the tissue symmetry compared to malignant tumors.
 
-Big picture: we can improve breast cancer diagnosis and detection
-
-Early detection is key to recovery from breast cancer. Women who are diagnosed at the earliest stage of breast cancer have a much greater chance of surviving (> 90%) compared to women who are diagnosed at the most advanced stage (only 5%, [source](http://www.cancerresearchuk.org/about-cancer/cancer-symptoms/why-is-early-diagnosis-important)).
-
-Row {data-height = 750}
+Column {data-width = 700}
 -----------------------------------------------------------------------
 
 ### Characteristics of breast cancer masses
@@ -62,19 +58,31 @@ vectors <- vectors*40
 
 origin <- as.data.frame(matrix(0, ncol = 2, nrow = 1))
 
-for(i in 1:8){
-  vector_i <- vectors[1, ]
-  data_i <- rbind(origin, vector_i)
-}
-
+data_1 <- rbind(origin, vectors[1, ])
+data_2 <- rbind(origin, vectors[2, ])
+data_3 <- rbind(origin, vectors[3, ])
+data_4 <- rbind(origin, vectors[4, ])
+data_5 <- rbind(origin, vectors[5, ])
+data_6 <- rbind(origin, vectors[6, ])
+data_7 <- rbind(origin, vectors[7, ])
+data_8 <- rbind(origin, vectors[8, ])
 
 plot(snne)
 plot(fit)
 
+data$diagnosis <- as.factor(data$diagnosis)
+levels(data$diagnosis) <- c("Benign", "Malignant")
+
 plot_ly() %>% 
-  add_trace(data = snne, x = snne$V1, y = snne$V2, type="scatter", mode="markers", opacity = 0.7, color = ~data$diagnosis, colors = "Set1") 
-  
-#add_trace(data = data_1, x = area$V1, y = area$V2, type="scatter", mode = "lines", name = "mean area")
+  add_trace(data = snne, x = snne$V1, y = snne$V2, type="scatter", mode="markers", opacity = 0.7, color = ~data$diagnosis, colors = "Set1") %>% 
+  add_trace(data = data_1, x = data_1$V1, y = data_1$V2, type="scatter", mode = "lines", name = "mean area", colors = "Set1") %>%
+  add_trace(data = data_2, x = data_2$V1, y = data_2$V2, type="scatter", mode = "lines", name = "radius (SE)", colors = "Set1") %>%
+  add_trace(data = data_3, x = data_3$V1, y = data_3$V2, type="scatter", mode = "lines", name = "texture (worst)", colors = "Set1") %>%
+  add_trace(data = data_4, x = data_4$V1, y = data_4$V2, type="scatter", mode = "lines", name = "smoothness (worst)", colors = "Set1") %>%
+  add_trace(data = data_5, x = data_5$V1, y = data_5$V2, type="scatter", mode = "lines", name = "symmetry (worst)", colors = "Set1") %>%
+  add_trace(data = data_6, x = data_6$V1, y = data_6$V2, type="scatter", mode = "lines", name = "cell concavity (SE)", colors = "Set1") %>%
+  add_trace(data = data_7, x = data_7$V1, y = data_7$V2, type="scatter", mode = "lines", name = "fractal dimension (worst)", colors = "Set1") %>%
+  add_trace(data = data_8, x = data_8$V1, y = data_8$V2, type="scatter", mode = "lines", name = "symmetry (SE)", colors = "Set1") 
 
 
 ```
