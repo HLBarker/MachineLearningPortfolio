@@ -30,7 +30,7 @@ Biopsy via fine-needle aspiration is a relatively non-invasive and quick techniq
 
 Early detection is key to recovery from breast cancer. Women who are diagnosed at the earliest stage of breast cancer have a much greater chance of surviving (> 90%) compared to women who are diagnosed at the most advanced stage (only 5%, [source](http://www.cancerresearchuk.org/about-cancer/cancer-symptoms/why-is-early-diagnosis-important)). Leveraging data and machine learning approaches could help to speed up breast cancer diagnosis and detection.
 
-The scatterplot to the left illustrates the key differences between malignant (gray) and benign (red) breast tumors. Each line is a vector of a particular tumor characteristic. Values of that characteristic increase along the vector, so for instance malignant tumors have larger values for the tissue's mean area, standard error of the radius, and standard error of cell concavity compared to benign tumors. Similarly, benign tumors tend to have larger standard errors of the tissue symmetry compared to malignant tumors.
+The scatterplot to the left illustrates the key differences between malignant (gray) and benign (red) breast tumors. Each line is a vector of a particular characteristic of the cell nuclei. Values of that characteristic increase along the vector, so for instance malignant tumors have larger values for the nuclei's mean area, standard error of the radius, and standard error of nuclei concavity compared to benign tumors. Similarly, benign tumors tend to have larger standard errors of the nuclei symmetry compared to malignant tumors.
 
 Column {data-width = 700}
 -----------------------------------------------------------------------
