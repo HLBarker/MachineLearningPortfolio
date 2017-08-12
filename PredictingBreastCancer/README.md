@@ -6,7 +6,7 @@ Biopsy via fine-needle aspiration is a relatively non-invasive and quick techniq
 
 ### Objective
 
-Accurately predict whether a breast tumor is benign or malignant based on its characteristics (*e.g.*, size, texture, etc.).
+Using a breast cancer dataset, my goal it to accurately predict whether a breast tumor is benign or malignant based on its cell nucleus characteristics (*e.g.*, size, texture, etc.).
 
 ### Machine learning process
 
@@ -18,7 +18,7 @@ Modeling shows that a only a modest number (eight) of breast tumor/lump characte
 
 ### Next steps
 
-To make this machine learning approach easy to use and incorporate in hospitals, we would need to create a web application that extracts the eight necessary characteristics from breast biopsy images (e.g., mean area, cell concavity, texture). With this approach, the tumor measurements would be (1) standardized across samples, (2) measurement/human error would hopefully be eliminated, and (3) measurements would be fast and easy to procure and automate. The application would then feed the data into the stacked machine learning model and produce a clear outcome: malignant or benign. In addition, the application could also deliver more information about the breast lump in comparison to the larger population (e.g., what percentile does the lump belong in for the different measurements compared to a database of breast lumps?).
+To make this machine learning approach easy to use and incorporate in hospitals, we would need to create a web application that extracts the eight necessary characteristics from breast biopsy images (e.g., cell nuclei mean area, concavity, texture). With this approach, the measurements would be (1) standardized across samples, (2) measurement/human error would hopefully be eliminated, and (3) measurements would be fast and easy to procure and automate. The application would then feed the data into the stacked machine learning model and produce a clear outcome: malignant or benign. In addition, the application could also deliver more information about the breast lump in comparison to the larger population (e.g., what percentile does the lump belong in for the different measurements compared to a database of breast lumps?).
 
 ---
 ### Description of files:
