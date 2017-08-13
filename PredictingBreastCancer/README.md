@@ -2,11 +2,11 @@
 
 ### Background information
 
-Biopsy via fine-needle aspiration is a relatively non-invasive and quick technique for assessing the malignancy of breast lumps ([source](https://bmccancer.biomedcentral.com/articles/10.1186/1471-2407-12-41)). Breast cancer affects one in eight women ([source](http://www.breastcancer.org/symptoms/understand_bc/statistics)), and early detection is critical for safe recovery ([source](http://www.cancerresearchuk.org/about-cancer/cancer-symptoms/why-is-early-diagnosis-important)). 
+Breast cancer affects one in eight women ([source](http://www.breastcancer.org/symptoms/understand_bc/statistics)), and early detection is critical for safe recovery ([source](http://www.cancerresearchuk.org/about-cancer/cancer-symptoms/why-is-early-diagnosis-important)).  Biopsy via fine-needle aspiration is a relatively non-invasive and quick technique for assessing the malignancy of breast lumps ([source](https://bmccancer.biomedcentral.com/articles/10.1186/1471-2407-12-41)). In this process, a small sample of breast lump/tumor tissue is extracted and then examined under a microscope and various characteristics of the cell nuclei are recorded. Based off of these characteristics, a patholigist can determine whether the cells are cancerous or not.
 
 ### Objective
 
-Using a breast cancer dataset, my goal it to accurately predict whether a breast tumor is benign or malignant based on its cell nucleus characteristics (*e.g.*, size, texture, etc.).
+Using a breast cancer dataset, my goal it to accurately predict whether a breast tumor is benign or malignant based on its cell nuclei characteristics (*e.g.*, size, texture, etc.).
 
 ### Machine learning process
 
