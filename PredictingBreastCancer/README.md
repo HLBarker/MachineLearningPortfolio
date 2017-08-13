@@ -1,4 +1,4 @@
-# Predicting breast cancer from tumor characteristics
+# Predicting breast cancer from tumor cell characteristics
 
 ### Background information
 
