@@ -6,7 +6,7 @@ Breast cancer affects one in eight women ([source](http://www.breastcancer.org/s
 
 ### Objective
 
-Using a breast cancer dataset, my goal it to accurately predict whether a breast tumor is benign or malignant based on its cell nuclei characteristics (*e.g.*, size, texture, etc.).
+Using a breast cancer dataset, my goal is to accurately predict whether a breast tumor is benign or malignant based on its cell nuclei characteristics (*e.g.*, size, texture, etc.).
 
 ### Machine learning process
 
