@@ -9,7 +9,7 @@ Accurately predict a student's performance (final grade) in math from various at
 Data
 ----
 
-The dataset includes the student's final math score (performance) and 30 different characteristics about the student and is freely available on the [UCI Machine Learning Repository](http://archive.ics.uci.edu/ml/datasets/Student+Performance).
+The dataset includes the student's final math score (performance) along with 30 different characteristics about the student (e.g., family information, health, time spent studying, etc.). The data are freely available on the [UCI Machine Learning Repository](http://archive.ics.uci.edu/ml/datasets/Student+Performance).
 
 ``` r
 studentdata <- read.csv("~/Documents/Data Science/GitHub_repository/MachineLearningPortfolio/PredictingStudentPerformance/student_data/student-mat.csv", sep = ";", header = TRUE) # student math scores and characteristics
@@ -297,7 +297,7 @@ plot(results, type=c("g", "o")) # plot the results
 Spot-checking ML algorithms
 ---------------------------
 
-Models that appear useful for accurate prediction (minimized root mean squared error) include gbm, rf, treebag, and rpart. In addition these useful models are all fairly correlated with eachother and thus model stacking will likely not improve prediction accuracy.
+Models that appear useful for accurate prediction (minimized root mean squared error) include gbm, rf, treebag, and rpart. In addition these useful models are all fairly correlated with eachother and thus model stacking may not improve prediction accuracy.
 
 ``` r
 control <- trainControl(method = "repeatedcv", number = 10, repeats=3)
@@ -599,4 +599,74 @@ min(rpart_gridsearch$results$RMSE) # 0.8702648
 
     ## [1] 0.8702648
 
-To conclude, a random forest regression model with all 30 predictor variables (14 randomly selected at each split in the decision tree) is the best model at predicting a student's final test score (performance). While this tuned model surpasses other algorithm types (e.g., generalized linear models, support vector machines) and published studies using the same dataset (Cortez and Silva 2008, best RMSE was 1.75), much of the variation in student performance is still not explained (R squared is 0.296). Thus, likely other factors not explored in this dataset contribute to student performance (e.g., instructor information, socioeconomic variables, class size).
+Model stacking
+--------------
+
+I've decided to try model stacking with just the best tuned model, random forest, and a recursive partitioning regression tree (rpart) since rpart was still fairly good at prediction (RMSE = 0.87) and was not too strongly correlated with the random forest model (0.736 correlation). After testing out a few different ways of stacking these models, I discovered that using a gradient boosting machine to stack the rpart and rf models results in a much improved model (RMSE = 0.81).
+
+``` r
+algorithmsList2 <- c("rf", "rpart")
+
+stackControl <- trainControl(method="repeatedcv", number=10, repeats=3, savePredictions=TRUE, classProbs=TRUE)
+set.seed(seed)
+garbage <- capture.output(models2 <- caretList(FinalGrade ~ ., data = studentdata, trControl = stackControl, methodList = algorithmsList2))
+
+
+set.seed(seed)
+stack.glm <- caretStack(models2, method = "glm", metric = "RMSE", trControl=stackControl) # stack models with glm
+print(stack.glm) # 0.8441826
+```
+
+    ## A glm ensemble of 2 base models: rf, rpart
+    ## 
+    ## Ensemble results:
+    ## Generalized Linear Model 
+    ## 
+    ## 1185 samples
+    ##    2 predictor
+    ## 
+    ## No pre-processing
+    ## Resampling: Cross-Validated (10 fold, repeated 3 times) 
+    ## Summary of sample sizes: 1067, 1066, 1066, 1066, 1067, 1065, ... 
+    ## Resampling results:
+    ## 
+    ##   RMSE       Rsquared 
+    ##   0.8441826  0.2906907
+
+``` r
+garbage <- capture.output(stack.gbm <- caretStack(models2, method = "gbm", metric = "RMSE", trControl=stackControl)) # stack models with gbm
+print(stack.gbm) # 0.8101679, 0.34 R squared
+```
+
+    ## A gbm ensemble of 2 base models: rf, rpart
+    ## 
+    ## Ensemble results:
+    ## Stochastic Gradient Boosting 
+    ## 
+    ## 1185 samples
+    ##    2 predictor
+    ## 
+    ## No pre-processing
+    ## Resampling: Cross-Validated (10 fold, repeated 3 times) 
+    ## Summary of sample sizes: 1067, 1067, 1066, 1067, 1066, 1067, ... 
+    ## Resampling results across tuning parameters:
+    ## 
+    ##   interaction.depth  n.trees  RMSE       Rsquared 
+    ##   1                   50      0.8164694  0.3371441
+    ##   1                  100      0.8104543  0.3427557
+    ##   1                  150      0.8111513  0.3417136
+    ##   2                   50      0.8101679  0.3433616
+    ##   2                  100      0.8124560  0.3395967
+    ##   2                  150      0.8168911  0.3335865
+    ##   3                   50      0.8116170  0.3408505
+    ##   3                  100      0.8172995  0.3326164
+    ##   3                  150      0.8223481  0.3263624
+    ## 
+    ## Tuning parameter 'shrinkage' was held constant at a value of 0.1
+    ## 
+    ## Tuning parameter 'n.minobsinnode' was held constant at a value of 10
+    ## RMSE was used to select the optimal model using  the smallest value.
+    ## The final values used for the model were n.trees = 50, interaction.depth
+    ##  = 2, shrinkage = 0.1 and n.minobsinnode = 10.
+
+To conclude, a stacked model (via a gradient boosting machine) that includes both a random forest and recursive partitioning regression tree models with all 30 predictor variables is the best model at predicting a student's final test score (performance). While this stacked model surpasses other algorithm types (e.g., generalized linear models, support vector machines) and published studies using the same dataset (Cortez and Silva 2008, best RMSE was 1.75), much of the variation in student performance is still not explained (R squared is 0.34). Thus, likely other factors not explored in this dataset contribute to student performance (e.g., instructor information, socioeconomic variables, class size).
