@@ -12,9 +12,9 @@ Data
 The dataset includes the student's final math score (performance) and 30 different characteristics about the student and is freely available on the [UCI Machine Learning Repository](http://archive.ics.uci.edu/ml/datasets/Student+Performance).
 
 ``` r
-data <- read.csv("~/Documents/Data Science/GitHub_repository/MachineLearningPortfolio/PredictingStudentPerformance/student_data/student-mat.csv", sep = ";", header = TRUE) # student math scores and characteristics
+studentdata <- read.csv("~/Documents/Data Science/GitHub_repository/MachineLearningPortfolio/PredictingStudentPerformance/student_data/student-mat.csv", sep = ";", header = TRUE) # student math scores and characteristics
 
-str(data) # 395 students with 33 variables, "G3.y" is the final grade and predictor target
+str(studentdata) # 395 students with 33 variables, "G3.y" is the final grade and predictor target
 ```
 
     ## 'data.frame':    395 obs. of  33 variables:
@@ -53,7 +53,7 @@ str(data) # 395 students with 33 variables, "G3.y" is the final grade and predic
     ##  $ G3        : int  6 6 10 15 10 15 11 6 19 15 ...
 
 ``` r
-data %>% 
+studentdata %>% 
   sapply(function(x) sum(is.na(x))) # no missing data
 ```
 
@@ -71,7 +71,7 @@ data %>%
     ##          0          0          0
 
 ``` r
-data %>% 
+studentdata %>% 
   boxplot(use.cols = TRUE) # a few fairly skewed predictors and variable scales
 ```
 
@@ -83,7 +83,7 @@ Data transformation
 After trying out various transformations (including centering, scaling, normalization, BoxCox, and YeoJohnson), I have decided to use standardization which helps to make the data more normal in distribution while still maintaining variation in the predictors.
 
 ``` r
-preprocessParams <- preProcess(data, method = c("center", "scale")) # calculate the pre-process parameters from the dataset by standardizing them
+preprocessParams <- preProcess(studentdata, method = c("center", "scale")) # calculate the pre-process parameters from the dataset by standardizing them
 print(preprocessParams) # summarize transform parameters
 ```
 
@@ -95,7 +95,7 @@ print(preprocessParams) # summarize transform parameters
     ##   - scaled (16)
 
 ``` r
-transformed <- predict(preprocessParams, data) # transform the dataset using the parameters
+transformed <- predict(preprocessParams, studentdata) # transform the dataset using the parameters
 # summary(transformed) # summarize the transformed dataset
 boxplot(transformed, use.cols = TRUE)
 ```
@@ -148,11 +148,11 @@ str(transformed_pruned) # 569 observations with 13 predictors
     ##  $ G3        : num  -0.9637 -0.9637 -0.0906 1.0007 -0.0906 ...
 
 ``` r
-data <- cbind(transformed_pruned$G3, transformed_pruned[, 1:13], transformed_factors) # do not want G1.y and G2.y (1st and 2nd period grades) since these are highly correlated with the final grade, but make the modeling less useful
+studentdata <- cbind(transformed_pruned$G3, transformed_pruned[, 1:13], transformed_factors) # do not want G1.y and G2.y (1st and 2nd period grades) since these are highly correlated with the final grade, but make the modeling less useful
  # We just want to predict final grades based off of student attributes and not previous grades
-names(data)[1] <- "FinalGrade"
+names(studentdata)[1] <- "FinalGrade"
 
-str(data)
+str(studentdata)
 ```
 
     ## 'data.frame':    395 obs. of  31 variables:
@@ -197,7 +197,7 @@ Based off of importance ranking, the student's number of failures, their mother'
 seed <- 23
 set.seed(seed)
 control <- trainControl(method = "repeatedcv", number = 10, repeats = 3) # prepare training scheme
-model <- train(FinalGrade ~ ., data = data, method = "BstLm", preProcess = "scale", trControl = control) # train the model
+model <- train(FinalGrade ~ ., data = studentdata, method = "BstLm", preProcess = "scale", trControl = control) # train the model
 importance <- varImp(model, scale = FALSE) # estimate variable importance
 print(importance) # summarize importance
 ```
@@ -242,7 +242,7 @@ Feature selection shows that all 30 predictors are needed to minimize the cross-
 ``` r
 set.seed(seed)
 control <- rfeControl(functions = rfFuncs, method = "cv", number = 10) # define the control using a random forest selection function
-results <- rfe(data[ , -1], data$FinalGrade, sizes = c(1:17), rfeControl = control) # run the RFE algorithm
+results <- rfe(studentdata[ , -1], studentdata$FinalGrade, sizes = c(1:17), rfeControl = control) # run the RFE algorithm
 print(results) # summarize the results
 ```
 
@@ -294,66 +294,309 @@ plot(results, type=c("g", "o")) # plot the results
 
 ![](PredictingStudentPerformance_files/figure-markdown_github-ascii_identifiers/feature%20selection-1.png)
 
-``` r
-#data <- data %>% 
-#  select(FinalGrade, selected_predictors)
-#str(data)
-```
-
 Spot-checking ML algorithms
 ---------------------------
 
-Models that appear useful for accurate prediction include gbm, glmnet, glm, svmRadial, rf and C5.0.
+Models that appear useful for accurate prediction (minimized root mean squared error) include gbm, rf, treebag, and rpart. In addition these useful models are all fairly correlated with eachother and thus model stacking will likely not improve prediction accuracy.
 
-{r spot checking algorithms, message=FALSE, warning=FALSE} control &lt;- trainControl(method = "repeatedcv", number = 10, repeats=3) set.seed(seed) metric &lt;- "Accuracy" \# define test metric to compare models
+``` r
+control <- trainControl(method = "repeatedcv", number = 10, repeats=3)
+set.seed(seed)
+metric <- "RMSE" # define test metric to compare models
 
-algorithms &lt;- c("lda", "glm", "glmnet", "svmRadial", "knn", "nb", "rpart", "C5.0", "treebag", "rf", "gbm")
+algorithms <- c("glmboost", "gam", "glmnet", "svmRadial", "mlp", "knn", "rpart", "treebag", "rf", "gbm", "lasso") # regression algorithms
 
-garbage &lt;- capture.output(models &lt;- caretList(diagnosis ~ ., data = data, trControl = control, methodList = algorithms)) results &lt;- resamples(models) summary(results) dotplot(results) cormodels &lt;- modelCor(results) print(cormodels) corrplot(cormodels)
+garbage <- capture.output(models <- caretList(FinalGrade ~ ., data = studentdata, trControl = control, methodList = algorithms))
+results <- resamples(models)
+summary(results)
+```
+
+    ## 
+    ## Call:
+    ## summary.resamples(object = results)
+    ## 
+    ## Models: glmboost, gam, glmnet, svmRadial, mlp, knn, rpart, treebag, rf, gbm, lasso 
+    ## Number of resamples: 30 
+    ## 
+    ## RMSE 
+    ##             Min. 1st Qu. Median   Mean 3rd Qu.   Max. NA's
+    ## glmboost  0.6443  0.8850 0.9282 0.9286  0.9817 1.1610    0
+    ## gam       0.7474  0.8614 0.9255 0.9264  0.9816 1.1390    0
+    ## glmnet    0.6422  0.8794 0.9389 0.9305  0.9904 1.1730    0
+    ## svmRadial 0.5967  0.8469 0.9400 0.9196  0.9868 1.1990    0
+    ## mlp       0.6635  0.8832 0.9904 0.9795  1.0650 1.2620    0
+    ## knn       0.6192  0.8669 0.9826 0.9468  1.0060 1.1890    0
+    ## rpart     0.6968  0.8452 0.9238 0.9113  0.9709 1.0780    0
+    ## treebag   0.6411  0.7811 0.8456 0.8526  0.9119 1.0570    0
+    ## rf        0.5886  0.7848 0.8132 0.8405  0.8947 1.0460    0
+    ## gbm       0.6224  0.8014 0.8468 0.8506  0.9195 0.9895    0
+    ## lasso     0.6562  0.8822 0.9220 0.9282  0.9741 1.1560    0
+    ## 
+    ## Rsquared 
+    ##                Min. 1st Qu.  Median   Mean 3rd Qu.   Max. NA's
+    ## glmboost  1.901e-02 0.06849 0.11340 0.1475  0.2201 0.4519    0
+    ## gam       2.859e-03 0.10590 0.16510 0.1864  0.2438 0.5217    0
+    ## glmnet    1.693e-02 0.06604 0.11260 0.1445  0.2208 0.4389    0
+    ## svmRadial 7.962e-03 0.11000 0.15920 0.1643  0.2073 0.3566    0
+    ## mlp       3.978e-05 0.04354 0.08777 0.1380  0.1798 0.6061    0
+    ## knn       5.692e-04 0.05310 0.11640 0.1165  0.1478 0.3694    0
+    ## rpart     5.004e-07 0.04588 0.20170 0.2008  0.3251 0.5624    0
+    ## treebag   2.751e-02 0.14480 0.21680 0.2699  0.4178 0.6064    0
+    ## rf        5.331e-02 0.13300 0.27070 0.2975  0.4222 0.6555    0
+    ## gbm       5.280e-02 0.12190 0.24480 0.2701  0.4125 0.6018    0
+    ## lasso     1.295e-02 0.07452 0.12370 0.1497  0.2162 0.4752    0
+
+``` r
+dotplot(results)
+```
+
+![](PredictingStudentPerformance_files/figure-markdown_github-ascii_identifiers/spot%20checking%20algorithms-1.png)
+
+``` r
+cormodels <- modelCor(results)
+print(cormodels)
+```
+
+    ##            glmboost       gam    glmnet svmRadial       mlp       knn
+    ## glmboost  1.0000000 0.7742958 0.9986327 0.9428175 0.7752308 0.9045990
+    ## gam       0.7742958 1.0000000 0.7560791 0.6975535 0.6617136 0.6001555
+    ## glmnet    0.9986327 0.7560791 1.0000000 0.9476446 0.7632615 0.9097512
+    ## svmRadial 0.9428175 0.6975535 0.9476446 1.0000000 0.7432219 0.9416852
+    ## mlp       0.7752308 0.6617136 0.7632615 0.7432219 1.0000000 0.7721056
+    ## knn       0.9045990 0.6001555 0.9097512 0.9416852 0.7721056 1.0000000
+    ## rpart     0.4273335 0.3677891 0.4141704 0.3399188 0.3821655 0.3838986
+    ## treebag   0.6989512 0.5746011 0.6847208 0.6342849 0.6362725 0.6900036
+    ## rf        0.8117863 0.6978115 0.8019424 0.7739424 0.7108624 0.7914000
+    ## gbm       0.7776508 0.7164573 0.7626981 0.7153208 0.7300175 0.7363712
+    ## lasso     0.9969394 0.8011239 0.9928828 0.9388553 0.7800779 0.8914106
+    ##               rpart   treebag        rf       gbm     lasso
+    ## glmboost  0.4273335 0.6989512 0.8117863 0.7776508 0.9969394
+    ## gam       0.3677891 0.5746011 0.6978115 0.7164573 0.8011239
+    ## glmnet    0.4141704 0.6847208 0.8019424 0.7626981 0.9928828
+    ## svmRadial 0.3399188 0.6342849 0.7739424 0.7153208 0.9388553
+    ## mlp       0.3821655 0.6362725 0.7108624 0.7300175 0.7800779
+    ## knn       0.3838986 0.6900036 0.7914000 0.7363712 0.8914106
+    ## rpart     1.0000000 0.7939789 0.7360467 0.7286550 0.4146105
+    ## treebag   0.7939789 1.0000000 0.9488914 0.8963963 0.6896669
+    ## rf        0.7360467 0.9488914 1.0000000 0.9413480 0.8039603
+    ## gbm       0.7286550 0.8963963 0.9413480 1.0000000 0.7788929
+    ## lasso     0.4146105 0.6896669 0.8039603 0.7788929 1.0000000
+
+``` r
+corrplot(cormodels)
+```
+
+![](PredictingStudentPerformance_files/figure-markdown_github-ascii_identifiers/spot%20checking%20algorithms-2.png)
 
 Tune best ML algorithms
 -----------------------
 
-With model tuning, we can slightly increase the prediction accuracies of the best machine learning algorithms. After tuning, the most accurate model is a gradient boosting machine (gbm) with 1,000 trees, a shrinkage parameter of 0.01, and a minimum of 15 observations in the terminal tree nodes, and the model allows for 2-way interactions between predictor variables. This model has an accuracy of 0.9696.
+With model tuning, we can slightly increase the prediction accuracies of the best machine learning algorithms. After tuning, the most accurate model is a random forest where 14 randomly selected predictor variables are used at each split within the decision tree. This model has a root mean squared error (RMSE) of 0.843.
 
-{r tuning best algorithms, message=FALSE, warning=FALSE} \# glm modelLookup(model = "glm") \# look up the tuning parameter of the model set.seed(seed) glm\_gridsearch &lt;- train(diagnosis ~ ., data = data, method = "glm", metric = metric, trControl = control) print(glm\_gridsearch)
+``` r
+# gbm
+modelLookup(model = "gbm")
+```
 
-gbm
-===
+    ##   model         parameter                   label forReg forClass
+    ## 1   gbm           n.trees   # Boosting Iterations   TRUE     TRUE
+    ## 2   gbm interaction.depth          Max Tree Depth   TRUE     TRUE
+    ## 3   gbm         shrinkage               Shrinkage   TRUE     TRUE
+    ## 4   gbm    n.minobsinnode Min. Terminal Node Size   TRUE     TRUE
+    ##   probModel
+    ## 1      TRUE
+    ## 2      TRUE
+    ## 3      TRUE
+    ## 4      TRUE
 
-tunegrid &lt;- expand.grid(n.trees = c(900, 1000, 1100), interaction.depth = c(1, 2), shrinkage = c(0.01), n.minobsinnode = c(15, 20)) set.seed(seed) garbage &lt;- capture.output(gbm\_gridsearch &lt;- train(diagnosis ~ ., data = data, method = "gbm", metric = metric, tuneGrid = tunegrid, trControl = control)) print(gbm\_gridsearch) max(gbm\_gridsearch*r**e**s**u**l**t**s*Accuracy)
+``` r
+tunegrid <- expand.grid(n.trees = c(800, 900), interaction.depth = c(1, 2), 
+                        shrinkage = c(0.01), n.minobsinnode = c(3, 5)) 
+set.seed(seed)
 
-glmnet
-======
+garbage <- capture.output(gbm_gridsearch <- caret::train(FinalGrade ~ ., data = studentdata, method = "gbm", 
+                                                  metric = metric, tuneGrid = tunegrid, trControl = control))
+print(gbm_gridsearch)
+```
 
-tunegrid &lt;- expand.grid(alpha = c(0.5, 0.75, 1), lambda = c(0.0001, 0.0002, 0.0003)) set.seed(seed) glmnet\_gridsearch &lt;- train(diagnosis ~ ., data = data, method = "glmnet", metric = metric, tuneGrid = tunegrid, trControl = control) print(glmnet\_gridsearch) max(glmnet\_gridsearch*r**e**s**u**l**t**s*Accuracy)
+    ## Stochastic Gradient Boosting 
+    ## 
+    ## 395 samples
+    ##  30 predictor
+    ## 
+    ## No pre-processing
+    ## Resampling: Cross-Validated (10 fold, repeated 3 times) 
+    ## Summary of sample sizes: 355, 356, 357, 355, 355, 354, ... 
+    ## Resampling results across tuning parameters:
+    ## 
+    ##   interaction.depth  n.minobsinnode  n.trees  RMSE       Rsquared 
+    ##   1                  3               800      0.8853811  0.2190930
+    ##   1                  3               900      0.8834045  0.2219351
+    ##   1                  5               800      0.8864584  0.2173022
+    ##   1                  5               900      0.8844112  0.2207434
+    ##   2                  3               800      0.8484817  0.2764960
+    ##   2                  3               900      0.8485218  0.2767355
+    ##   2                  5               800      0.8483467  0.2761407
+    ##   2                  5               900      0.8479729  0.2773923
+    ## 
+    ## Tuning parameter 'shrinkage' was held constant at a value of 0.01
+    ## RMSE was used to select the optimal model using  the smallest value.
+    ## The final values used for the model were n.trees = 900,
+    ##  interaction.depth = 2, shrinkage = 0.01 and n.minobsinnode = 5.
 
-svmRadial
-=========
+``` r
+min(gbm_gridsearch$results$RMSE) # 0.8478651
+```
 
-tunegrid &lt;- expand.grid(sigma = c(0.14, 0.15, 0.16, 0.17, 0.18), C = c(0.75, 0.80, 0.90, 1)) set.seed(seed) svm\_gridsearch &lt;- train(diagnosis ~ ., data = data, method = "svmRadial", metric = metric, tuneGrid = tunegrid, trControl = control) svm\_gridsearch &lt;- train(diagnosis ~ ., data = data, method = "svmRadial", metric = metric, tunelength = 5, trControl = control) print(svm\_gridsearch) max(svm\_gridsearch*r**e**s**u**l**t**s*Accuracy)
+    ## [1] 0.8479729
 
-rf
-==
+``` r
+# treebag
+modelLookup(model = "treebag")
+```
 
-mtry &lt;- sqrt(ncol(data\[ , 2:9\])) \# default for rf tuning parameter is 2.828427 tunegrid &lt;- expand.grid(.mtry = c(1:8)) set.seed(seed) rf\_gridsearch &lt;- train(diagnosis ~ ., data = data, method = "rf", metric = metric, tuneGrid = tunegrid, trControl = control) print(rf\_gridsearch) max(rf\_gridsearch*r**e**s**u**l**t**s*Accuracy)
+    ##     model parameter     label forReg forClass probModel
+    ## 1 treebag parameter parameter   TRUE     TRUE      TRUE
 
-C5.0
-====
+``` r
+set.seed(seed)
+treebag_mod <- caret::train(FinalGrade ~ ., data = studentdata, method = "treebag", metric = metric,
+                            trControl = control)
+treebag_gridsearch <- caret::train(FinalGrade ~ ., data = studentdata, method = "treebag", metric = metric, tunelength = 5,
+                       trControl = control)
+print(treebag_mod) # 0.8593949
+```
 
-tunegrid &lt;- expand.grid(.trials = c(5:15), .model = "tree", .winnow = FALSE) set.seed(seed) C5.0\_gridsearch &lt;- train(diagnosis ~ ., data = data, method = "C5.0", metric = metric, tuneGrid = tunegrid, trControl = control) print(C5.0\_gridsearch) max(C5.0\_gridsearch*r**e**s**u**l**t**s*Accuracy)
+    ## Bagged CART 
+    ## 
+    ## 395 samples
+    ##  30 predictor
+    ## 
+    ## No pre-processing
+    ## Resampling: Cross-Validated (10 fold, repeated 3 times) 
+    ## Summary of sample sizes: 355, 356, 357, 355, 355, 354, ... 
+    ## Resampling results:
+    ## 
+    ##   RMSE      Rsquared 
+    ##   0.847604  0.2810426
 
-Ensemble modeling
------------------
+``` r
+print(treebag_gridsearch) # 0.8442427
+```
 
-Stacking the best machine learning models together with a random forest algorithm, slightly improves upon the accuracy of the best tuned gradient boosting machine (which had an accuracy of 0.9696). The accuracy of the stacked model is 0.977, and the model includes the generalized linear model (glm), radial support vector machine (svmRadial), the random forest model, C5.0, and the gradient boosting machine. I did not include the glmnet model since this was highly correlated (&gt; 0.75) with the generalized linear model.
+    ## Bagged CART 
+    ## 
+    ## 395 samples
+    ##  30 predictor
+    ## 
+    ## No pre-processing
+    ## Resampling: Cross-Validated (10 fold, repeated 3 times) 
+    ## Summary of sample sizes: 356, 356, 356, 356, 354, 354, ... 
+    ## Resampling results:
+    ## 
+    ##   RMSE       Rsquared 
+    ##   0.8465247  0.2999178
 
-{r, message=FALSE, warning=FALSE} algorithmsList2 = c("glm", "svmRadial", "C5.0", "rf", "gbm")
+``` r
+# rf
+modelLookup(model = "rf")
+```
 
-stackControl &lt;- trainControl(method="repeatedcv", number=10, repeats=3, savePredictions=TRUE, classProbs=TRUE) set.seed(seed) garbage &lt;- capture.output(models2 &lt;- caretList(diagnosis ~ ., data = data, trControl = stackControl, methodList = algorithmsList2))
+    ##   model parameter                         label forReg forClass probModel
+    ## 1    rf      mtry #Randomly Selected Predictors   TRUE     TRUE      TRUE
 
-set.seed(seed) stack.glm &lt;- caretStack(models2, method = "glm", metric = "Accuracy", trControl=stackControl) \# stack models with glm \# try out different kinds of models to stack to see which one is most accurate print(stack.glm) \# 0.9726613
+``` r
+mtry <- sqrt(ncol(studentdata[ , -1])) # default for rf tuning parameter is 5.477226
+tunegrid <- expand.grid(.mtry = c(1:15))
+set.seed(seed)
+rf_gridsearch <- caret::train(FinalGrade ~ ., data = studentdata, method = "rf", metric = metric, tuneGrid = tunegrid,
+                       trControl = control)
+print(rf_gridsearch)
+```
 
-set.seed(seed) stack.rf &lt;- caretStack(models2, method = "rf", metric = "Accuracy", trControl=stackControl) \# stack models with glm \# try out different kinds of models to stack to see which one is most accurate print(stack.rf) \# 0.9769578
+    ## Random Forest 
+    ## 
+    ## 395 samples
+    ##  30 predictor
+    ## 
+    ## No pre-processing
+    ## Resampling: Cross-Validated (10 fold, repeated 3 times) 
+    ## Summary of sample sizes: 355, 356, 357, 355, 355, 354, ... 
+    ## Resampling results across tuning parameters:
+    ## 
+    ##   mtry  RMSE       Rsquared 
+    ##    1    0.9406732  0.1882839
+    ##    2    0.9084331  0.2175828
+    ##    3    0.8925893  0.2381934
+    ##    4    0.8850598  0.2444083
+    ##    5    0.8750945  0.2573038
+    ##    6    0.8667886  0.2706480
+    ##    7    0.8636332  0.2727488
+    ##    8    0.8577813  0.2821451
+    ##    9    0.8554245  0.2816697
+    ##   10    0.8493789  0.2928952
+    ##   11    0.8465483  0.2962357
+    ##   12    0.8464486  0.2926188
+    ##   13    0.8437584  0.2981257
+    ##   14    0.8434868  0.2961594
+    ##   15    0.8445827  0.2921483
+    ## 
+    ## RMSE was used to select the optimal model using  the smallest value.
+    ## The final value used for the model was mtry = 14.
 
-To conclude, a stacked machine learning model with eight breast tumor characteristics is quite accurate (0.977) at determining whether the tumor is benign or malignant. This statistical approach could be applied to help improve breast cancer diagnoses and detection.
+``` r
+min(rf_gridsearch$results$RMSE) # 0.8434868
+```
+
+    ## [1] 0.8434868
+
+``` r
+# rpart
+modelLookup(model = "rpart")
+```
+
+    ##   model parameter                label forReg forClass probModel
+    ## 1 rpart        cp Complexity Parameter   TRUE     TRUE      TRUE
+
+``` r
+tunegrid <- expand.grid(.cp = c(0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.15)) 
+set.seed(seed)
+rpart_gridsearch <- caret::train(FinalGrade ~ ., data = studentdata, method = "rpart", metric = metric, tuneGrid = tunegrid,
+                       trControl = control)
+
+print(rpart_gridsearch)
+```
+
+    ## CART 
+    ## 
+    ## 395 samples
+    ##  30 predictor
+    ## 
+    ## No pre-processing
+    ## Resampling: Cross-Validated (10 fold, repeated 3 times) 
+    ## Summary of sample sizes: 355, 356, 357, 355, 355, 354, ... 
+    ## Resampling results across tuning parameters:
+    ## 
+    ##   cp    RMSE       Rsquared   
+    ##   0.01  0.9417633  0.193104579
+    ##   0.02  0.9022917  0.218694622
+    ##   0.03  0.8828974  0.222740543
+    ##   0.04  0.8702648  0.235908536
+    ##   0.05  0.8702648  0.235908536
+    ##   0.06  0.8702648  0.235908536
+    ##   0.07  0.8702648  0.235908536
+    ##   0.08  0.8702648  0.235908536
+    ##   0.09  0.8702648  0.235908536
+    ##   0.10  0.8983565  0.201510370
+    ##   0.15  0.9939951  0.006150281
+    ## 
+    ## RMSE was used to select the optimal model using  the smallest value.
+    ## The final value used for the model was cp = 0.09.
+
+``` r
+min(rpart_gridsearch$results$RMSE) # 0.8702648
+```
+
+    ## [1] 0.8702648
+
+To conclude, a random forest regression model with all 30 predictor variables (14 randomly selected at each split in the decision tree) is the best model at predicting a student's final test score (performance). While this tuned model surpasses other algorithm types (e.g., generalized linear models, support vector machines) and published studies using the same dataset (Cortez and Silva 2008, best RMSE was 1.75), much of the variation in student performance is still not explained (R squared is 0.296). Thus, likely other factors not explored in this dataset contribute to student performance (e.g., instructor information, socioeconomic variables, class size).
