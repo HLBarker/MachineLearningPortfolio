@@ -19,7 +19,7 @@ Given the prediction results, it is likely that other factors not explored in th
 ---
 ### Description of files:
 * PredictingStudentPerformance_files/figure-markdown_github-ascii_identifiers = contains figures that are shown in the PredictingStudentPerfomance.md file
-* student_data/ = contains the student-mat.csv file that has the student characteristic and performance measures from [UCI Machine Learning Repository](http://archive.ics.uci.edu/ml/datasets/Student+Performance)
+* student_data/ = contains the student-mat.csv file that has the student characteristic and performance measures from the [UCI Machine Learning Repository](http://archive.ics.uci.edu/ml/datasets/Student+Performance)
 * PredictingStudentPerformance.Rmd = R markdown document used to create the "PredictingStudentPerfomance.md" report
 * **PredictingStudentPerfomance.md** = report that outlines the data exploration, processing, modeling, and results (includes figures)
 
