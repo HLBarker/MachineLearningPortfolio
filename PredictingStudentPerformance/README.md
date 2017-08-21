@@ -3,7 +3,7 @@
 ### Background information
 
 ### Objective
-Using a student achievement dataset, accurately predict a student's final math score based on the student's characteristics (e.g., time spent studying, mother's education level, involvement in extra-curricular activities).
+Using a student achievement dataset (Cortez and Silva 2008), accurately predict a student's final math score based on the student's characteristics (e.g., time spent studying, mother's education level, involvement in extra-curricular activities).
 
 ### Machine learning process
 With feature selection, I found that all 30 standardized student characteristics were needed to obtain the most accurate predictions of the students' final scores. I then tested out various types of regression algorithms to assess which algorithms were best at minimizing the cross-validation root mean squared error (gradient boosting machine, random forest, bagged regression tree, and a recursive partitioning and regression tree all predicted student performance fairly well). I then tuned the models and selected the models that gave the best predictions and were fairly uncorrelated (< 0.75) with one another, resulting in the random forest and recursive partitioning regression tree models. Lastly, I used model stacking of these two models, stacked with a gradient boosting machine. This final model resulted in a cross-validation root mean squared error of 0.81 which was slightly lower than individual models (>= 0.84) and much better than the results from published studies using the same dataset (Cortez and Silva 2008, best RMSE was 1.75). 
