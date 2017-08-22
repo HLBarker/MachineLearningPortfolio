@@ -1,6 +1,7 @@
 # Predicting student performance
 
 ### Background information
+Data mining and modeling are powerful tools that can be used to help improve student learning gains and success in the classroom. Traditionally, student data has been used in teaching-as-learning research to understand how different types of lessons, for instance, may affect student learning. Increasingly, these data are becoming more fine-tuned...
 
 ### Objective
 Using a student achievement dataset (Cortez and Silva 2008), accurately predict a student's final math score based on the student's characteristics (e.g., time spent studying, mother's education level, involvement in extra-curricular activities).
@@ -19,7 +20,7 @@ Given the prediction results, it is likely that other factors not explored in th
 ---
 ### Description of files:
 * PredictingStudentPerformance_files/figure-markdown_github-ascii_identifiers = contains figures that are shown in the PredictingStudentPerfomance.md file
-* student_data/ = contains the student-mat.csv file that has the student characteristic and performance measures from the [UCI Machine Learning Repository](http://archive.ics.uci.edu/ml/datasets/Student+Performance)
+* student_data = contains the student-mat.csv file that has the student characteristic and performance measures from the [UCI Machine Learning Repository](http://archive.ics.uci.edu/ml/datasets/Student+Performance)
 * PredictingStudentPerformance.Rmd = R markdown document used to create the "PredictingStudentPerfomance.md" report
 * **PredictingStudentPerfomance.md** = report that outlines the data exploration, processing, modeling, and results (includes figures)
 
