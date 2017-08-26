@@ -1,0 +1,6 @@
+"0","transformed_pruned <- transformed %>% 
+  select(-c(highlyCorrelated)) 
+"
+"2","Error in select(., -c(highlyCorrelated)) : 
+  unused argument (-c(highlyCorrelated))
+"
