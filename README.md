@@ -9,12 +9,19 @@ Here, I present a diverse set of data science projects which showcases my skills
 
 ### List of projects:
 * Predicting [breast cancer diagnosis](https://github.com/HLBarker/MachineLearningPortfolio/tree/master/PredictingBreastCancer) 
-* Predicting [student performance](http://archive.ics.uci.edu/ml/datasets/Student+Performance) (currently in production)
-* Visualizing the USA's [health insurance marketplace](https://www.kaggle.com/hhs/health-insurance-marketplace) (forthcoming)
+  * Classification (binomial)
+* Predicting [student performance](http://archive.ics.uci.edu/ml/datasets/Student+Performance) 
+  * Regression
+* Visualizing the USA's [health insurance marketplace](https://www.kaggle.com/hhs/health-insurance-marketplace) (currently in production)
+  * Interactive data dashboard
 * Understanding the factors/traits that underlie [readmission for diabetes patients](http://archive.ics.uci.edu/ml/datasets/Diabetes+130-US+hospitals+for+years+1999-2008) (forthcoming)
+  * Clustering
 * Predicting [wine quality](http://archive.ics.uci.edu/ml/datasets/Wine+Quality) (forthcoming)
+  * Classification (multiclass)
 * Predicting the [number of social media shares for Mashable news articles](http://archive.ics.uci.edu/ml/datasets/Online+News+Popularity) (forthcoming)
+  * Regression
 * Understanding the elements of [hotel reviews](http://archive.ics.uci.edu/ml/datasets/OpinRank+Review+Dataset) (forthcoming)
+  * Text analytics
 
 
  
