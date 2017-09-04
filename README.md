@@ -10,7 +10,7 @@ Here, I present a diverse set of data science projects which showcases my skills
 ### List of projects:
 * Predicting [breast cancer diagnosis](https://github.com/HLBarker/MachineLearningPortfolio/tree/master/PredictingBreastCancer) 
   * Classification (binomial)
-* Predicting [student performance](http://archive.ics.uci.edu/ml/datasets/Student+Performance) 
+* Predicting [student performance](https://github.com/HLBarker/MachineLearningPortfolio/tree/master/PredictingStudentPerformance) 
   * Regression
 * Visualizing the USA's [health insurance marketplace](https://www.kaggle.com/hhs/health-insurance-marketplace) (currently in production)
   * Interactive data dashboard
