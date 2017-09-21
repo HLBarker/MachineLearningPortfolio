@@ -20,6 +20,8 @@ Here, I present a diverse set of data science projects which showcases my skills
   * Regression
 * Understanding the elements of [hotel reviews](http://archive.ics.uci.edu/ml/datasets/OpinRank+Review+Dataset) (forthcoming)
   * Text analytics
+* Visualizing the [biodiversity in U.S. National Parks](https://www.kaggle.com/nationalparkservice/park-biodiversity/data) (forthcoming)
+  * Interactive data dashboard
 
 
  
