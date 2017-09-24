@@ -1,0 +1,28 @@
+---
+title: "Diabetes_Readmission_clustering"
+author: "Hilary Barker"
+date: "9/21/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Exploring diabetes data
+
+
+
+```{r data import, message=FALSE, warning=FALSE}
+diabetic <- read.csv("~/Desktop/GitHub_repository/MachineLearningPortfolio/DiabetesReadmission/Diabetes_data/diabetic_data.csv")
+
+str(diabetic)
+```
+
+## Clustering approach = reducing dimensions
+
+Since these data are highly dimensional (>45 predictors), I'll first need to reduce the number of predictors to select only the most important features for cluster analysis. To do this, I investigate correlations among numeric predictors and prune redundant features (predictor that is highly correlated, >0.75 with another feature). Then, I use feature ranking with the caret package. This procedure ranks all predictors by their importance for predicting the outcome variable (whether and when the diabetes patient was readmitted to the hospital). Lastly, I use recursive feature selection in caret to determine which features are most important for accurate predictions and should be included in clustering.
+
+Also, since I am trying to gain insights into which attributes of a patient influence whether or not they will be readmitted, I will not reduce predictor dimensions with for instance, a principal components analysis (PCA) and then use these principal components as predictors in the clustering analyses. This approach makes it difficult to discern which features (race, age, etc.) are driving the results and the data lose their interpretability.
+
+
