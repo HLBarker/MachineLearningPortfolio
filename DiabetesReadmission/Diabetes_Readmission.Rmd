@@ -17,6 +17,13 @@ knitr::opts_chunk$set(echo = TRUE)
 diabetic <- read.csv("~/Desktop/GitHub_repository/MachineLearningPortfolio/DiabetesReadmission/Diabetes_data/diabetic_data.csv")
 
 str(diabetic)
+
+diabetic %>% 
+  sapply(function(x) sum(is.na(x))) # no missing data
+
+plot(diabetic$readmitted) # about half of the patients are not readmitted, while ~35% are readmitted
+  # after 30 days and ~15% are readmitted within 30 days of their last hospital stay
+  
 ```
 
 ## Clustering approach = reducing dimensions
